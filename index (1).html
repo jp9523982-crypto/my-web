@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Cafe Local — Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CAFE OWNER: neeche "CONFIG" section (JS mein) me jaake apna
+     cafe ka naam, menu, WhatsApp number aur UPI ID daal dein.
+     Yeh file kahin bhi free host ho sakti hai (GitHub Pages /
+     Netlify) — koi backend/server nahi chahiye.
+     ============================================================ */
+
+  :root{
+    --ink:#1B4B43;
+    --ink-deep:#123832;
+    --mustard:#E8A33D;
+    --paper:#FBF3E7;
+    --paper-warm:#F5E9D6;
+    --rust:#C1502E;
+    --charcoal:#2B2420;
+    --line: rgba(43,36,32,0.18);
+    --line-soft: rgba(43,36,32,0.09);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'Karla',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:84px;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+
+  header.topbar{
+    background:var(--ink);
+    color:var(--paper);
+    padding:28px 20px 22px;
+    position:relative;
+    overflow:hidden;
+  }
+  header.topbar::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:10px;
+    background-image: radial-gradient(circle at 10px 0, transparent 6px, var(--paper) 6.5px);
+    background-size: 20px 10px;
+    background-repeat: repeat-x;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    font-size:11.5px;
+    color:var(--mustard);
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  header.topbar h1{
+    font-size:30px;
+    margin:0 0 4px;
+    color:#fff;
+  }
+  header.topbar p.tagline{
+    margin:0;
+    font-size:13.5px;
+    color:rgba(251,243,231,0.75);
+  }
+  .table-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:14px;
+    background:rgba(251,243,231,0.1);
+    border:1px solid rgba(251,243,231,0.25);
+    color:var(--paper);
+    font-size:12.5px;
+    padding:6px 12px;
+    border-radius:20px;
+  }
+
+  nav.cats{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:16px 20px 4px;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+  nav.cats::-webkit-scrollbar{display:none;}
+  .cat-btn{
+    flex:0 0 auto;
+    background:#fff;
+    border:1px solid var(--line);
+    color:var(--charcoal);
+    font-family:'Karla',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:8px 15px;
+    border-radius:20px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .cat-btn.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+
+  main.menu{ padding:8px 20px 20px; max-width:640px; margin:0 auto; }
+  .cat-section{ margin-top:22px; }
+  .cat-section h2{
+    font-size:19px;
+    margin:0 0 10px;
+    color:var(--ink-deep);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .cat-section h2::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 11px);
+  }
+  .item-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:13px 0;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .item-info h3{
+    font-size:15.5px;
+    margin:0 0 3px;
+    font-weight:600;
+  }
+  .item-info p.desc{
+    margin:0 0 5px;
+    font-size:12.5px;
+    color:rgba(43,36,32,0.6);
+    font-family:'Karla',sans-serif;
+    line-height:1.4;
+  }
+  .item-info .price{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:14.5px;
+    color:var(--rust);
+  }
+  .item-info .pack-note{
+    font-size:11px;
+    color:rgba(43,36,32,0.5);
+    margin-left:6px;
+    font-family:'Karla',sans-serif;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:0;
+    flex:0 0 auto;
+  }
+  .stepper button{
+    width:30px; height:30px;
+    border:1px solid var(--ink);
+    background:#fff;
+    color:var(--ink);
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .stepper .qty{
+    width:28px;
+    text-align:center;
+    font-weight:700;
+    font-size:14px;
+    font-family:'Karla',sans-serif;
+  }
+  .add-btn{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    padding:8px 16px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:13px;
+    font-family:'Karla',sans-serif;
+    cursor:pointer;
+  }
+  .add-btn:active{ transform:scale(0.97); }
+
+  .sticky-bar{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    background:var(--ink);
+    color:#fff;
+    padding:13px 20px;
+    display:none;
+    align-items:center;
+    justify-content:space-between;
+    cursor:pointer;
+    box-shadow:0 -6px 20px rgba(0,0,0,0.18);
+    z-index:40;
+  }
+  .sticky-bar.show{ display:flex; }
+  .sticky-bar .count{ font-size:13px; color:rgba(251,243,231,0.8); }
+  .sticky-bar .total{ font-family:'Fraunces',serif; font-weight:700; font-size:17px; }
+  .sticky-bar .cta{
+    background:var(--mustard);
+    color:var(--ink-deep);
+    padding:8px 16px;
+    border-radius:6px;
+    font-weight:700;
+    font-size:13px;
+  }
+
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(18,56,50,0.55);
+    display:none;
+    z-index:50;
+  }
+  .overlay.show{ display:block; }
+  .ticket{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    max-height:88vh;
+    overflow-y:auto;
+    background:#fff;
+    border-radius:18px 18px 0 0;
+    padding:22px 20px 26px;
+    transform:translateY(100%);
+    transition:transform .25s ease;
+    z-index:55;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .ticket.show{ transform:translateY(0); }
+  .ticket-head{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:4px;
+  }
+  .ticket-head h2{ font-size:20px; margin:0; }
+  .close-x{
+    background:none;border:none;font-size:20px;cursor:pointer;color:var(--charcoal);
+    width:32px;height:32px;
+  }
+  .ticket-sub{ font-size:12px; color:rgba(43,36,32,0.55); margin:0 0 16px; }
+
+  .ticket-line{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:9px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:14px;
+  }
+  .ticket-line .name{ flex:1; }
+  .ticket-line .lqty{ color:rgba(43,36,32,0.55); margin-right:8px; font-size:12.5px;}
+  .ticket-line .lprice{ font-weight:700; font-family:'Fraunces',serif; }
+  .empty-note{ text-align:center; color:rgba(43,36,32,0.5); padding:30px 0; font-size:13.5px;}
+
+  .order-type{
+    display:flex; gap:8px; margin:18px 0 12px;
+  }
+  .ot-btn{
+    flex:1;
+    padding:10px 8px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    border-radius:8px;
+    font-weight:700;
+    font-size:13px;
+    font-family:'Karla',sans-serif;
+    cursor:pointer;
+    color:var(--charcoal);
+  }
+  .ot-btn.active{
+    border-color:var(--ink);
+    background:var(--paper-warm);
+    color:var(--ink-deep);
+  }
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12px; font-weight:700; margin-bottom:5px; color:var(--ink-deep); text-transform:uppercase; letter-spacing:0.05em;}
+  .field input, .field select{
+    width:100%;
+    padding:10px 12px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    font-family:'Karla',sans-serif;
+    font-size:14px;
+    background:#fff;
+  }
+
+  .totals{ margin-top:16px; padding-top:10px; border-top:1px solid var(--line); }
+  .trow{ display:flex; justify-content:space-between; font-size:13.5px; padding:4px 0; color:rgba(43,36,32,0.75);}
+  .trow.grand{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:19px;
+    color:var(--ink-deep);
+    padding-top:8px;
+    margin-top:4px;
+    border-top:1px solid var(--line);
+  }
+
+  .min-cart-note{
+    margin-top:10px;
+    font-size:12.5px;
+    padding:9px 12px;
+    border-radius:8px;
+    background:#FCE9E4;
+    color:var(--rust);
+    font-weight:600;
+    display:none;
+  }
+  .min-cart-note.show{ display:block; }
+
+  .send-btn{
+    width:100%;
+    margin-top:14px;
+    background:#25D366;
+    color:#fff;
+    border:none;
+    padding:14px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:15px;
+    font-family:'Karla',sans-serif;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .send-btn:disabled{ background:#B7C6BE; cursor:not-allowed; }
+
+  .flow-note{
+    background:var(--paper-warm);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:12.5px;
+    line-height:1.5;
+    color:rgba(43,36,32,0.8);
+    margin-top:14px;
+  }
+  .flow-note b{ color:var(--ink-deep); }
+
+  .pay-box{
+    margin-top:12px;
+    border:1.5px dashed var(--rust);
+    border-radius:10px;
+    padding:12px 14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .pay-box .upi-id{ font-weight:700; font-size:13.5px; font-family:'Fraunces',serif;}
+  .pay-box small{ display:block; color:rgba(43,36,32,0.55); font-size:11px; margin-top:2px;}
+  .copy-btn{
+    background:var(--rust); color:#fff; border:none; padding:7px 12px;
+    border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex:0 0 auto;
+  }
+
+  @media (min-width: 700px){
+    .ticket{ border-radius:18px; bottom:20px; right:20px; left:auto; width:400px; max-height:80vh;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <p class="eyebrow">Scan · Order · Pickup or Delivery</p>
+  <h1 id="cafeName">Cafe Local</h1>
+  <p class="tagline" id="cafeTagline">Geeta Bhawan, Indore</p>
+  <span class="table-chip" id="modeChip">🛵 Delivery within 5 km · 🥡 Takeaway available</span>
+</header>
+
+<nav class="cats" id="catNav"></nav>
+
+<main class="menu" id="menuMain"></main>
+
+<div class="sticky-bar" id="stickyBar">
+  <div>
+    <div class="count" id="stickyCount">0 items</div>
+    <div class="total" id="stickyTotal">₹0</div>
+  </div>
+  <div class="cta">View Order →</div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="ticket" id="ticket">
+  <div class="ticket-head">
+    <h2>🧾 Your Order</h2>
+    <button class="close-x" id="closeTicket">✕</button>
+  </div>
+  <p class="ticket-sub" id="ticketCafeLine">Cafe Local · Kitchen Order Ticket</p>
+
+  <div id="ticketLines"></div>
+
+  <div class="order-type">
+    <button class="ot-btn active" data-type="delivery">🛵 Delivery</button>
+    <button class="ot-btn" data-type="takeaway">🥡 Takeaway</button>
+  </div>
+
+  <div id="deliveryFields">
+    <div class="field">
+      <label>Delivery Zone</label>
+      <select id="zoneSelect"></select>
+    </div>
+    <div class="field">
+      <label>Delivery Address (near Geeta Bhawan, Indore)</label>
+      <input type="text" id="addressInput" placeholder="House / landmark / area">
+    </div>
+  </div>
+
+  <div id="takeawayFields" style="display:none;">
+    <div class="field">
+      <label>Pickup Time (approx.)</label>
+      <input type="text" id="pickupInput" placeholder="e.g. 15 mins / 7:30 PM">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Your Name & Contact Number</label>
+    <input type="text" id="contactInput" placeholder="Name, phone number">
+  </div>
+
+  <div class="totals">
+    <div class="trow"><span>Item Subtotal</span><span id="subtotalVal">₹0</span></div>
+    <div class="trow"><span>Packaging Charges</span><span id="packVal">₹0</span></div>
+    <div class="trow" id="deliveryRow"><span>Delivery Charge</span><span id="deliveryVal">₹0</span></div>
+    <div class="trow grand"><span>Total</span><span id="grandTotalVal">₹0</span></div>
+  </div>
+
+  <div class="min-cart-note" id="minCartNote"></div>
+
+  <button class="send-btn" id="sendBtn" disabled>
+    Send Order on WhatsApp
+  </button>
+
+  <div class="flow-note">
+    <b>Next steps:</b> WhatsApp khulega with your order pre-filled — bas <b>Send</b> daba dein.
+    Delivery orders ke liye cafe se aapko <b>location share karne ka message</b> aayega, phir final bill aur order confirmation.
+  </div>
+
+  <div class="pay-box">
+    <div>
+      <div class="upi-id" id="upiIdText">yourcafe@upi</div>
+      <small>Pay after order is confirmed</small>
+    </div>
+    <button class="copy-btn" id="copyUpi">Copy UPI ID</button>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIG — Cafe owner sirf isi section ko edit kare. Baaki code touch
+   karne ki zaroorat nahi.
+   ===================================================================== */
+const CONFIG = {
+  cafeName: "Cafe Local",
+  tagline: "Geeta Bhawan, Indore",
+
+  // WhatsApp number jahan order forward hoga — country code ke saath, no + or spaces
+  whatsappNumber: "918817707189",
+
+  // UPI ID — ise apni actual UPI ID se badal dein
+  upiId: "yourcafe@upi",
+
+  // Sirf items ka subtotal isse kam hone par order nahi bhej sakenge
+  minCartAmount: 150,
+
+  // Delivery zones — within 5 km hi delivery
+  deliveryZones: [
+    { label: "Within 1 km",  charge: 0 },
+    { label: "1 – 3 km",     charge: 15 },
+    { label: "3 – 5 km",     charge: 30 },
+  ],
+
+  // Menu — category-wise items, price aur packaging charge
+  menu: [
+    { category: "Chai & Coffee", items: [
+      { name: "Local Chai", price: 20, pack: 2 },
+      { name: "Pista Chai", price: 25, pack: 2 },
+      { name: "Classic Hot Coffee", price: 30, pack: 5 },
+      { name: "Hazelnut Hot Coffee", price: 60, pack: 5 },
+      { name: "Hot Chocolate", price: 90, pack: 5 },
+    ]},
+    { category: "Cold Coffee", items: [
+      { name: "Classic Cold Coffee", price: 70, pack: 5 },
+      { name: "Hazelnut Cold Coffee", price: 90, pack: 5 },
+      { name: "Cream & Cookies", price: 100, pack: 5 },
+    ]},
+    { category: "Shakes", items: [
+      { name: "Oreo Shake", price: 70, pack: 5 },
+      { name: "Chocolate Shake", price: 70, pack: 5 },
+      { name: "KitKat Shake", price: 80, pack: 5 },
+      { name: "Mixberry Shake", price: 90, pack: 5 },
+      { name: "Strawberry Shake", price: 90, pack: 5 },
+    ]},
+    { category: "Mojitos", items: [
+      { name: "Fresh Lime Water", price: 50, pack: 5 },
+      { name: "Virgin Mojito", price: 70, pack: 5 },
+      { name: "Blue Lagoon", price: 80, pack: 5 },
+      { name: "Lemon Iced Tea", price: 80, pack: 5 },
+      { name: "Kiwi Kick", price: 80, pack: 5 },
+    ]},
+    { category: "Fries", items: [
+      { name: "Classic Fries", price: 60, pack: 5 },
+      { name: "Masala Fries", price: 70, pack: 5 },
+      { name: "Peri Peri Fries", price: 80, pack: 5 },
+      { name: "Cheesy Fries", price: 90, pack: 5 },
+    ]},
+    { category: "Burgers", items: [
+      { name: "Aloo Tikki Burger", price: 50, pack: 5 },
+      { name: "Spicy Aloo Tikki Burger", price: 70, pack: 5 },
+      { name: "Vegetable Aloo Tikki Burger", price: 70, pack: 5 },
+      { name: "Cheese Aloo Tikki Burger", price: 80, pack: 5 },
+    ]},
+    { category: "Maggi", items: [
+      { name: "Classic Maggi", price: 50, pack: 5 },
+      { name: "Double Masala Maggi", price: 60, pack: 5 },
+      { name: "Veg Butter Maggi", price: 80, pack: 5 },
+      { name: "Cheese Corn Maggi", price: 90, pack: 5 },
+      { name: "Cheesy Veg Maggi", price: 90, pack: 5 },
+      { name: "Local Special Maggi", price: 100, pack: 5 },
+    ]},
+    { category: "Sandwiches", items: [
+      { name: "Masala Sandwich", price: 60, pack: 7 },
+      { name: "Cheese Chutney Sandwich", price: 70, pack: 7 },
+      { name: "Masala Cheese Sandwich", price: 80, pack: 7 },
+      { name: "Veg Sandwich", price: 80, pack: 7 },
+      { name: "Cheese Corn Sandwich", price: 90, pack: 7 },
+      { name: "Chocolate Sandwich", price: 90, pack: 7 },
+      { name: "Local Jumbo Sandwich", price: 100, pack: 7 },
+    ]},
+    { category: "Crispy Cravings", items: [
+      { name: "Crispy Corn", price: 110, pack: 5 },
+      { name: "Honey Chilli Potato", price: 110, pack: 5 },
+    ]},
+    { category: "Rice Bowls", items: [
+      { name: "Butter Khichdi", price: 80, pack: 5 },
+      { name: "Chole Chawal", price: 80, pack: 7 },
+      { name: "Dal Chawal", price: 80, pack: 7 },
+      { name: "Veg Pulao", price: 100, pack: 5 },
+      { name: "Fried Rice", price: 100, pack: 5 },
+      { name: "Punjabi Khichdi", price: 110, pack: 5 },
+    ]},
+    { category: "Desi Cravings", items: [
+      { name: "Chole Kulche", price: 70, pack: 5 },
+      { name: "Pav Bhaji", price: 60, pack: 5 },
+      { name: "Extra Kulcha", price: 20, pack: 0 },
+      { name: "Extra Pav", price: 15, pack: 0 },
+    ]},
+    { category: "Pizza & Breads", items: [
+      { name: "Margherita Pizza", price: 100, pack: 7 },
+      { name: "Veg Pizza", price: 120, pack: 7 },
+      { name: "Cheese Corn Pizza", price: 130, pack: 7 },
+      { name: "Paneer Pizza", price: 140, pack: 7 },
+      { name: "Local Special Pizza", price: 150, pack: 7 },
+      { name: "Cheese Garlic Bread", price: 100, pack: 7 },
+    ]},
+    { category: "Noodles", items: [
+      { name: "Hakka Noodles", price: 80, pack: 5 },
+      { name: "Veg Noodles", price: 90, pack: 5 },
+      { name: "Schezwan Noodles", price: 110, pack: 5 },
+    ]},
+    { category: "Pasta", items: [
+      { name: "White Sauce Pasta", price: 120, pack: 5 },
+      { name: "Red Sauce Pasta", price: 120, pack: 5 },
+      { name: "Cheesy Veg Pasta", price: 140, pack: 5 },
+    ]},
+  ]
+};
+/* ===================================================================== */
+
+let cart = {}; // { itemName: {qty, price, pack} }
+let orderType = "delivery";
+
+function money(n){ return "₹" + n.toLocaleString("en-IN"); }
+
+function renderHeader(){
+  document.getElementById("cafeName").textContent = CONFIG.cafeName;
+  document.getElementById("cafeTagline").textContent = CONFIG.tagline;
+  document.getElementById("ticketCafeLine").textContent = CONFIG.cafeName + " · Kitchen Order Ticket";
+  document.getElementById("upiIdText").textContent = CONFIG.upiId;
+}
+
+function renderZones(){
+  const sel = document.getElementById("zoneSelect");
+  sel.innerHTML = "";
+  CONFIG.deliveryZones.forEach((z, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = z.charge === 0 ? `${z.label} — Free` : `${z.label} — ${money(z.charge)}`;
+    sel.appendChild(opt);
+  });
+}
+
+function renderMenu(){
+  const nav = document.getElementById("catNav");
+  const main = document.getElementById("menuMain");
+  nav.innerHTML = "";
+  main.innerHTML = "";
+
+  CONFIG.menu.forEach((cat, ci) => {
+    const chip = document.createElement("button");
+    chip.className = "cat-btn" + (ci === 0 ? " active" : "");
+    chip.textContent = cat.category;
+    chip.onclick = () => {
+      document.querySelectorAll(".cat-btn").forEach(b => b.classList.remove("active"));
+      chip.classList.add("active");
+      document.getElementById("sec-" + ci).scrollIntoView({behavior:"smooth", block:"start"});
+    };
+    nav.appendChild(chip);
+
+    const section = document.createElement("section");
+    section.className = "cat-section";
+    section.id = "sec-" + ci;
+    section.innerHTML = `<h2>${cat.category}</h2>`;
+
+    cat.items.forEach(item => {
+      const row = document.createElement("div");
+      row.className = "item-row";
+      row.innerHTML = `
+        <div class="item-info">
+          <h3>${item.name}</h3>
+          <div class="price">${money(item.price)}${item.pack > 0 ? `<span class="pack-note">+ ${money(item.pack)} packaging</span>` : ""}</div>
+        </div>
+        <div class="qty-holder" data-name="${item.name}"></div>
+      `;
+      section.appendChild(row);
+      renderQtyControl(row.querySelector(".qty-holder"), item);
+    });
+
+    main.appendChild(section);
+  });
+}
+
+function renderQtyControl(holder, item){
+  const qty = cart[item.name]?.qty || 0;
+  holder.innerHTML = "";
+  if (qty === 0){
+    const btn = document.createElement("button");
+    btn.className = "add-btn";
+    btn.textContent = "Add";
+    btn.onclick = () => { changeQty(item, 1); };
+    holder.appendChild(btn);
+  } else {
+    const wrap = document.createElement("div");
+    wrap.className = "stepper";
+    wrap.innerHTML = `
+      <button data-act="minus">−</button>
+      <span class="qty">${qty}</span>
+      <button data-act="plus">+</button>
+    `;
+    wrap.querySelector('[data-act="minus"]').onclick = () => changeQty(item, -1);
+    wrap.querySelector('[data-act="plus"]').onclick = () => changeQty(item, 1);
+    holder.appendChild(wrap);
+  }
+}
+
+function changeQty(item, delta){
+  const current = cart[item.name]?.qty || 0;
+  const next = Math.max(0, current + delta);
+  if (next === 0) delete cart[item.name];
+  else cart[item.name] = { qty: next, price: item.price, pack: item.pack };
+
+  document.querySelectorAll(".qty-holder").forEach(h => {
+    if (h.dataset.name === item.name) renderQtyControl(h, item);
+  });
+  updateStickyBar();
+  renderTicketLines();
+  updateTotals();
+}
+
+function cartCount(){
+  return Object.values(cart).reduce((s,i) => s + i.qty, 0);
+}
+function subtotal(){
+  return Object.values(cart).reduce((s,i) => s + i.qty * i.price, 0);
+}
+function packagingTotal(){
+  return Object.values(cart).reduce((s,i) => s + i.qty * i.pack, 0);
+}
+
+function updateStickyBar(){
+  const bar = document.getElementById("stickyBar");
+  const count = cartCount();
+  if (count > 0){
+    bar.classList.add("show");
+    document.getElementById("stickyCount").textContent = `${count} item${count>1?"s":""}`;
+    document.getElementById("stickyTotal").textContent = money(subtotal());
+  } else {
+    bar.classList.remove("show");
+  }
+}
+
+function renderTicketLines(){
+  const box = document.getElementById("ticketLines");
+  const entries = Object.entries(cart);
+  if (entries.length === 0){
+    box.innerHTML = `<div class="empty-note">Menu se items add karein — order yahan dikhega.</div>`;
+    return;
+  }
+  box.innerHTML = entries.map(([name, d]) => `
+    <div class="ticket-line">
+      <span class="name"><span class="lqty">${d.qty}×</span>${name}</span>
+      <span class="lprice">${money(d.qty * d.price)}</span>
+    </div>
+  `).join("");
+}
+
+function currentDeliveryCharge(){
+  if (orderType !== "delivery") return 0;
+  const idx = document.getElementById("zoneSelect").value;
+  return CONFIG.deliveryZones[idx]?.charge || 0;
+}
+
+function updateTotals(){
+  const sub = subtotal();
+  const pack = packagingTotal();
+  const delivery = currentDeliveryCharge();
+  const grand = sub + pack + delivery;
+
+  document.getElementById("subtotalVal").textContent = money(sub);
+  document.getElementById("packVal").textContent = money(pack);
+  document.getElementById("deliveryRow").style.display = orderType === "delivery" ? "flex" : "none";
+  document.getElementById("deliveryVal").textContent = money(delivery);
+  document.getElementById("grandTotalVal").textContent = money(grand);
+
+  const note = document.getElementById("minCartNote");
+  const sendBtn = document.getElementById("sendBtn");
+  if (sub > 0 && sub < CONFIG.minCartAmount){
+    note.textContent = `Minimum order ${money(CONFIG.minCartAmount)} hai — abhi ${money(CONFIG.minCartAmount - sub)} aur add karein.`;
+    note.classList.add("show");
+    sendBtn.disabled = true;
+  } else {
+    note.classList.remove("show");
+    sendBtn.disabled = sub === 0;
+  }
+}
+
+const overlay = document.getElementById("overlay");
+const ticket = document.getElementById("ticket");
+
+function openTicket(){
+  overlay.classList.add("show");
+  ticket.classList.add("show");
+  renderTicketLines();
+  updateTotals();
+}
+function closeTicketFn(){
+  overlay.classList.remove("show");
+  ticket.classList.remove("show");
+}
+document.getElementById("stickyBar").onclick = openTicket;
+document.getElementById("closeTicket").onclick = closeTicketFn;
+overlay.onclick = closeTicketFn;
+
+document.querySelectorAll(".ot-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".ot-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    orderType = btn.dataset.type;
+    document.getElementById("deliveryFields").style.display = orderType === "delivery" ? "block" : "none";
+    document.getElementById("takeawayFields").style.display = orderType === "takeaway" ? "block" : "none";
+    updateTotals();
+  };
+});
+document.getElementById("zoneSelect").addEventListener("change", updateTotals);
+
+document.getElementById("copyUpi").onclick = () => {
+  navigator.clipboard.writeText(CONFIG.upiId).then(() => {
+    const btn = document.getElementById("copyUpi");
+    const old = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = old, 1500);
+  });
+};
+
+document.getElementById("sendBtn").onclick = () => {
+  const sub = subtotal();
+  if (sub === 0 || sub < CONFIG.minCartAmount) return;
+
+  const pack = packagingTotal();
+  const delivery = currentDeliveryCharge();
+  const total = sub + pack + delivery;
+  const lines = Object.entries(cart)
+    .map(([name, d]) => `${d.qty}x ${name} - ${money(d.qty * d.price)}`)
+    .join("\n");
+
+  const contact = document.getElementById("contactInput").value.trim() || "(not entered)";
+  let typeLine = "";
+  if (orderType === "delivery"){
+    const zoneIdx = document.getElementById("zoneSelect").value;
+    const zoneLabel = CONFIG.deliveryZones[zoneIdx]?.label || "";
+    const addr = document.getElementById("addressInput").value.trim() || "(will share location)";
+    typeLine = `Order Type: Delivery — Zone: ${zoneLabel}\nAddress: ${addr}`;
+  } else {
+    const pickup = document.getElementById("pickupInput").value.trim() || "(as soon as ready)";
+    typeLine = `Order Type: Takeaway — Pickup: ${pickup}`;
+  }
+
+  const msg =
+`🧾 New Order — ${CONFIG.cafeName}
+${typeLine}
+Contact: ${contact}
+------------------------
+${lines}
+------------------------
+Item Subtotal: ${money(sub)}
+Packaging Charges: ${money(pack)}` +
+(orderType === "delivery" ? `\nDelivery Charge: ${money(delivery)}` : "") +
+`\nTotal: ${money(total)}
+------------------------
+📍 Please confirm — I'll share my live location next if this is a delivery order.
+Thank you!`;
+
+  const url = `https://wa.me/${CONFIG.whatsappNumber}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+};
+
+renderHeader();
+renderZones();
+renderMenu();
+updateStickyBar();
+renderTicketLines();
+updateTotals();
+</script>
+
+</body>
+</html>
